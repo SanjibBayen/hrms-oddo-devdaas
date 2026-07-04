@@ -1,31 +1,38 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
+import dns from 'dns';
 import bcrypt from 'bcryptjs';
-import databaseManager from '../src/config/database';
 import { logger } from '../src/config/logger';
 
-const MONGODB_URI = process.env.MONGODB_WRITE_URI || 'mongodb://admin:password@localhost:27017/hrms?authSource=admin';
+// Force IPv4 for Atlas
+dns.setDefaultResultOrder('ipv4first');
+
+const MONGODB_URI = process.env.MONGODB_WRITE_URI || 'mongodb://localhost:27017/hrms';
 
 async function seed() {
   try {
-    // Connect directly for seeding
-    const conn = await mongoose.connect(MONGODB_URI);
-    logger.info('Connected for seeding');
+    logger.info('Connecting to MongoDB...');
+    const conn = await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 30000,
+      family: 4,
+    });
 
     const db = conn.connection.db;
     if (!db) throw new Error('Database not found');
 
     // Clear existing data
+    logger.info('Clearing existing data...');
     await db.collection('users').deleteMany({});
     await db.collection('attendances').deleteMany({});
     await db.collection('leaverequests').deleteMany({});
     await db.collection('payrolls').deleteMany({});
     await db.collection('auditlogs').deleteMany({});
-    logger.info('Cleared existing data');
 
-    // Create Admin User
+    // ============================================================
+    // CREATE ADMIN
+    // ============================================================
     const adminPassword = await bcrypt.hash('Admin@123', 12);
-    const admin = await db.collection('users').insertOne({
+    await db.collection('users').insertOne({
       employeeId: 'EMP0001',
       email: 'admin@hrms.com',
       password: adminPassword,
@@ -37,11 +44,7 @@ async function seed() {
         fullName: 'Admin User',
         phone: '+911234567890',
         address: 'Mumbai, India',
-        profilePicture: {
-          publicId: '',
-          secureUrl: '',
-          thumbnailUrl: '',
-        },
+        profilePicture: { publicId: '', secureUrl: '', thumbnailUrl: '' },
       },
       jobDetails: {
         position: 'HR Manager',
@@ -49,17 +52,16 @@ async function seed() {
         joiningDate: new Date('2024-01-01'),
         employmentType: 'full-time',
       },
-      salaryStructure: {
-        base: 80000,
-        allowances: 20000,
-        deductions: 5000,
-      },
+      salaryStructure: { base: 80000, allowances: 20000, deductions: 5000 },
       emailVerified: true,
     });
-    logger.info(`Admin created: admin@hrms.com / Admin@123`);
+    logger.info('✅ Admin created');
 
-    // Create Employee Users
+    // ============================================================
+    // CREATE EMPLOYEES
+    // ============================================================
     const empPassword = await bcrypt.hash('Employee@123', 12);
+
     const employees = [
       {
         employeeId: 'EMP0002',
@@ -155,69 +157,58 @@ async function seed() {
       },
     ];
 
-    const insertedEmployees = await db.collection('users').insertMany(employees);
-    logger.info(`${employees.length} employees created`);
+    await db.collection('users').insertMany(employees);
+    logger.info(`✅ ${employees.length} employees created`);
 
-    // Create sample attendance for today
+    // ============================================================
+    // CREATE SAMPLE ATTENDANCE
+    // ============================================================
     const today = new Date().toISOString().split('T')[0];
-    const attendanceData = [
-      {
-        userId: admin.insertedId,
-        date: today,
-        status: 'present',
-        checkInTime: new Date(`${today}T09:00:00`),
-        checkOutTime: new Date(`${today}T18:00:00`),
-        totalHours: 9,
-        isLate: false,
-        lateByMinutes: 0,
-        notes: '',
-      },
-      {
-        userId: insertedEmployees.insertedIds[0],
-        date: today,
-        status: 'present',
-        checkInTime: new Date(`${today}T09:10:00`),
-        checkOutTime: new Date(`${today}T18:00:00`),
-        totalHours: 8.8,
-        isLate: false,
-        lateByMinutes: 0,
-        notes: '',
-      },
-      {
-        userId: insertedEmployees.insertedIds[1],
-        date: today,
-        status: 'present',
-        checkInTime: new Date(`${today}T09:30:00`),
-        checkOutTime: null,
-        totalHours: 0,
-        isLate: true,
-        lateByMinutes: 15,
-        notes: 'Traffic delay',
-      },
-    ];
+    const users = await db.collection('users').find({}).toArray();
 
-    await db.collection('attendances').insertMany(attendanceData);
-    logger.info('Sample attendance created');
+    const attendances = [
+      { userId: users[0]?._id, date: today, status: 'present', checkInTime: new Date(`${today}T09:00:00`), checkOutTime: new Date(`${today}T18:00:00`), totalHours: 9, isLate: false, lateByMinutes: 0, notes: '' },
+      { userId: users[1]?._id, date: today, status: 'present', checkInTime: new Date(`${today}T09:10:00`), checkOutTime: new Date(`${today}T18:00:00`), totalHours: 8.8, isLate: false, lateByMinutes: 0, notes: '' },
+      { userId: users[2]?._id, date: today, status: 'present', checkInTime: new Date(`${today}T09:30:00`), checkOutTime: null, totalHours: 0, isLate: true, lateByMinutes: 15, notes: 'Traffic delay' },
+      { userId: users[3]?._id, date: today, status: 'absent', checkInTime: null, checkOutTime: null, totalHours: 0, isLate: false, lateByMinutes: 0, notes: '' },
+    ].filter(a => a.userId);
 
-    // Create sample leave request
-    await db.collection('leaverequests').insertOne({
-      userId: insertedEmployees.insertedIds[0],
-      leaveType: 'sick',
-      startDate: '2026-07-10',
-      endDate: '2026-07-11',
-      totalDays: 2,
-      reason: 'Not feeling well, need medical rest for two days',
-      status: 'pending',
-      adminComments: '',
-      reviewedBy: null,
-      reviewedAt: null,
-    });
-    logger.info('Sample leave request created');
+    if (attendances.length > 0) {
+      await db.collection('attendances').insertMany(attendances);
+      logger.info('✅ Sample attendance created');
+    }
 
-    logger.info('✅ Seeding complete!');
-    logger.info('---');
-    logger.info('Admin Login: admin@hrms.com / Admin@123');
-    logger.info('Employee Login: john@hrms.com / Employee@123');
+    // ============================================================
+    // CREATE SAMPLE LEAVE REQUEST
+    // ============================================================
+    if (users[1]) {
+      await db.collection('leaverequests').insertOne({
+        userId: users[1]._id,
+        leaveType: 'sick',
+        startDate: '2026-07-10',
+        endDate: '2026-07-11',
+        totalDays: 2,
+        reason: 'Not feeling well, need medical rest for two days',
+        status: 'pending',
+        adminComments: '',
+        reviewedBy: null,
+        reviewedAt: null,
+      });
+      logger.info('✅ Sample leave request created');
+    }
+
+    // ============================================================
+    // DONE
+    // ============================================================
+    logger.info('\n========================================');
+    logger.info('  SEEDING COMPLETE!');
+    logger.info('========================================');
+    logger.info('');
+    logger.info('Login Credentials:');
+    logger.info('  Admin:    admin@hrms.com / Admin@123');
+    logger.info('  Employee: john@hrms.com / Employee@123');
+    logger.info('  Employee: jane@hrms.com / Employee@123');
+    logger.info('');
 
     await mongoose.disconnect();
     process.exit(0);

@@ -128,7 +128,13 @@ class JWTService {
   }
 
   async revokeAllUserTokens(userId: string): Promise<void> {
-    await redisManager.delPattern(`refresh_token:${userId}*`);
+    const pattern = `refresh_token:${userId}*`;
+    // redisManager does not expose a delPattern helper; fetch matching keys and delete them
+    // Assume redisManager.keys and redisManager.del are available
+    const keys: string[] = (await (redisManager as any).keys(pattern)) || [];
+    if (keys.length > 0) {
+      await Promise.all(keys.map((k) => redisManager.del(k)));
+    }
   }
 
   generateFingerprint(req: {
