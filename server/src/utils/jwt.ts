@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { redisManager } from '../config/redis';
 
@@ -17,8 +17,8 @@ interface TokenPair {
 
 class JWTService {
   private static instance: JWTService;
-  private accessSecret: string;
-  private refreshSecret: string;
+  private accessSecret: jwt.Secret;
+  private refreshSecret: jwt.Secret;
   private accessExpiry: string;
   private refreshExpiry: string;
 
@@ -36,11 +36,7 @@ class JWTService {
     return JWTService.instance;
   }
 
-  generateTokenPair(user: {
-    _id: string;
-    employeeId: string;
-    role: string;
-  }): TokenPair {
+  generateTokenPair(user: { _id: string; employeeId: string; role: string }): TokenPair {
     const tokenId = crypto.randomBytes(32).toString('hex');
 
     const accessToken = jwt.sign(
@@ -49,13 +45,13 @@ class JWTService {
         employeeId: user.employeeId,
         role: user.role,
         type: 'access',
-      },
-      this.accessSecret,
+      } as unknown as string | Buffer | object,
+      this.accessSecret as jwt.Secret,
       {
         expiresIn: this.accessExpiry,
         issuer: 'hrms-enterprise',
         audience: 'hrms-users',
-      }
+      } as jwt.SignOptions
     );
 
     const refreshToken = jwt.sign(
@@ -63,13 +59,13 @@ class JWTService {
         sub: user._id,
         tokenId,
         type: 'refresh',
-      },
-      this.refreshSecret,
+      } as unknown as string | Buffer | object,
+      this.refreshSecret as jwt.Secret,
       {
         expiresIn: this.refreshExpiry,
         issuer: 'hrms-enterprise',
         audience: 'hrms-users',
-      }
+      } as jwt.SignOptions
     );
 
     // Store refresh token in Redis for rotation
@@ -144,10 +140,7 @@ class JWTService {
     const acceptLanguage = req.headers['accept-language'] || '';
     const ip = req.ip || req.socket?.remoteAddress || '';
 
-    return crypto
-      .createHash('sha256')
-      .update(`${userAgent}:${acceptLanguage}:${ip}`)
-      .digest('hex');
+    return crypto.createHash('sha256').update(`${userAgent}:${acceptLanguage}:${ip}`).digest('hex');
   }
 }
 
