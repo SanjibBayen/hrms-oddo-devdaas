@@ -56,7 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
           <div className="h-8 w-8 rounded-lg bg-[#0F172A] flex items-center justify-center">
             <span className="text-white font-bold text-sm">E</span>
           </div>
-          <span className="font-display font-bold text-slate-900 text-sm tracking-tight">HRMS ENTERPRISE</span>
+          <span className="font-display font-bold text-slate-900 text-sm tracking-tight">DEVDAAS HRMS</span>
         </div>
         <button 
           onClick={() => setMobileOpen(!mobileOpen)}
@@ -88,7 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
             </div>
             {!isCollapsed && (
               <span className="font-display font-bold text-[#0F172A] text-sm tracking-tight">
-                HRMS ENTERPRISE
+                DEVDAAS HRMS
               </span>
             )}
           </div>
