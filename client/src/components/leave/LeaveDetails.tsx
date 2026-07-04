@@ -46,7 +46,7 @@ export const LeaveDetails: React.FC<LeaveDetailsProps> = ({
             {leave.userName?.substring(0, 2).toUpperCase() || "ST"}
           </div>
           <div>
-            <span className="block font-bold text-slate-900 font-display text-xs">{leave.userName || leave.employeeName}</span>
+            <span className="block font-bold text-slate-900 font-display text-xs">{leave.userName}</span>
             <span className="block text-[10px] text-slate-400">{leave.department} Department</span>
           </div>
         </div>
@@ -56,7 +56,7 @@ export const LeaveDetails: React.FC<LeaveDetailsProps> = ({
           <div className="space-y-1">
             <span className="block font-bold text-slate-400 uppercase tracking-widest text-[9px]">Classification</span>
             <div className="flex items-center gap-2">
-              <Badge variant={leave.leaveType === "SICK" ? "danger" : leave.leaveType === "ANNUAL" ? "success" : "default"} className="text-[10px] font-bold">
+              <Badge variant={leave.leaveType === "SICK" ? "danger" : leave.leaveType === "ANNUAL" ? "success" : "neutral"} className="text-[10px] font-bold">
                 {leave.leaveType}
               </Badge>
               <span className="text-slate-500 font-medium">({diffDays} {diffDays === 1 ? "day" : "days"})</span>

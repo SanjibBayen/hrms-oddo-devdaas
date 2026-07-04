@@ -1,4 +1,4 @@
-import React, { HTMLAttributes, TableHTMLAttributes } from "react";
+import React, { TdHTMLAttributes, ThHTMLAttributes, TableHTMLAttributes, HTMLAttributes } from "react";
 
 export const Table: React.FC<TableHTMLAttributes<HTMLTableElement>> = ({ children, className = "", ...props }) => {
   return (
@@ -34,7 +34,7 @@ export const TableRow: React.FC<HTMLAttributes<HTMLTableRowElement>> = ({ childr
   );
 };
 
-export const TableHead: React.FC<HTMLAttributes<HTMLTableCellElement>> = ({ children, className = "", ...props }) => {
+export const TableHead: React.FC<ThHTMLAttributes<HTMLTableCellElement>> = ({ children, className = "", ...props }) => {
   return (
     <th className={`px-6 py-4.5 text-xs font-semibold text-slate-500 uppercase tracking-wider ${className}`} {...props}>
       {children}
@@ -42,7 +42,7 @@ export const TableHead: React.FC<HTMLAttributes<HTMLTableCellElement>> = ({ chil
   );
 };
 
-export const TableCell: React.FC<HTMLAttributes<HTMLTableCellElement>> = ({ children, className = "", ...props }) => {
+export const TableCell: React.FC<TdHTMLAttributes<HTMLTableCellElement>> = ({ children, className = "", ...props }) => {
   return (
     <td className={`px-6 py-4 text-sm text-slate-700 font-sans align-middle ${className}`} {...props}>
       {children}

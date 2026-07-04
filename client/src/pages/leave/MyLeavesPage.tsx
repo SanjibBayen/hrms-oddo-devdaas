@@ -33,7 +33,7 @@ export const MyLeavesPage: React.FC = () => {
   const annualRemaining = 18 - userLeaves.filter(l => l.leaveType === "ANNUAL" && l.status === "APPROVED").length;
 
   const filteredLeaves = userLeaves.filter((l) => {
-    const matchesSearch = (l.userName || l.employeeName || "").toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = (l.userName || "").toLowerCase().includes(search.toLowerCase());
     const matchesStatus = status === "ALL" || l.status === status;
     const matchesType = leaveType === "ALL" || l.leaveType === leaveType;
     return matchesSearch && matchesStatus && matchesType;

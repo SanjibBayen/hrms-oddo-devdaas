@@ -21,7 +21,7 @@ export const PayslipViewer: React.FC<PayslipViewerProps> = ({ payroll }) => {
         win.document.write(`
           <html>
             <head>
-              <title>Payslip - ${payroll.userName || payroll.employeeName}</title>
+              <title>Payslip - ${payroll.userName}</title>
               <style>
                 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1e293b; }
                 .payslip-container { max-width: 800px; margin: 0 auto; border: 1px solid #e2e8f0; padding: 30px; border-radius: 12px; }
@@ -81,7 +81,7 @@ export const PayslipViewer: React.FC<PayslipViewerProps> = ({ payroll }) => {
         <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-slate-700 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
           <div>
             <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Staff Associate</span>
-            <span className="font-bold text-slate-900 font-display text-xs">{payroll.userName || payroll.employeeName}</span>
+            <span className="font-bold text-slate-900 font-display text-xs">{payroll.userName}</span>
           </div>
           <div>
             <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Pay Statement Cycle</span>
@@ -114,11 +114,11 @@ export const PayslipViewer: React.FC<PayslipViewerProps> = ({ payroll }) => {
             <tbody className="divide-y divide-slate-50 font-medium">
               <tr>
                 <td className="py-2.5 text-slate-700">Contract Base Wages</td>
-                <td className="py-2.5 text-right font-mono text-slate-900">${(payroll.basicSalary || payroll.baseSalary || 0).toLocaleString()}</td>
+                <td className="py-2.5 text-right font-mono text-slate-900">${(payroll.basicSalary || 0).toLocaleString()}</td>
               </tr>
               <tr>
                 <td className="py-2.5 text-emerald-700">Active Monthly Performance Allowances</td>
-                <td className="py-2.5 text-right font-mono text-emerald-600">+${(payroll.allowances || payroll.bonus || 0).toLocaleString()}</td>
+                <td className="py-2.5 text-right font-mono text-emerald-600">+${(payroll.allowances || 0).toLocaleString()}</td>
               </tr>
               <tr>
                 <td className="py-2.5 text-rose-700">Social Care, Taxes & Retirement Deductions</td>

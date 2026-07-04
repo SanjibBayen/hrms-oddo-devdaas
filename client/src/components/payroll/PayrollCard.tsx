@@ -23,7 +23,7 @@ export const PayrollCard: React.FC<PayrollCardProps> = ({
         <div className="flex justify-between items-start">
           <div>
             <h4 className="text-xs font-bold text-slate-900 font-display leading-tight">
-              {payroll.userName || payroll.employeeName || "Employee Name"}
+              {payroll.userName || "Employee"}
             </h4>
             <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
               <Briefcase className="w-3 h-3" /> {payroll.designation || "Staff"} • {payroll.department || "HR"}
@@ -56,7 +56,7 @@ export const PayrollCard: React.FC<PayrollCardProps> = ({
           >
             <Eye className="w-3.5 h-3.5" /> View Payslip
           </button>
-          {isAdmin && payroll.status === "UNPAID" && (
+          {isAdmin && payroll.status === "DRAFT" && (
             <button
               onClick={() => onPay?.(payroll.id)}
               className="flex-1 py-1.5 px-3 bg-emerald-50 border border-emerald-100 text-emerald-600 hover:bg-emerald-100 text-[11px] font-semibold font-display rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer"

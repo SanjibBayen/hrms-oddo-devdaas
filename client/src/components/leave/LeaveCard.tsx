@@ -29,7 +29,7 @@ export const LeaveCard: React.FC<LeaveCardProps> = ({
             </span>
             <h4 className="text-xs font-bold text-slate-900 font-display flex items-center gap-1.5">
               <User className="w-3.5 h-3.5 text-slate-400" />
-              {leave.userName || leave.employeeName || "Associate"}
+              {leave.userName || "Associate"}
             </h4>
           </div>
           <LeaveStatusBadge status={leave.status} />
