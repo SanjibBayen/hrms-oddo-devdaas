@@ -2,12 +2,10 @@ import mongoose from 'mongoose';
 import dns from 'dns';
 import { logger } from './logger';
 
-// Force IPv4
 dns.setDefaultResultOrder('ipv4first');
 
 class DatabaseManager {
   private static instance: DatabaseManager;
-  private connection: mongoose.Connection | null = null;
   private connected: boolean = false;
 
   private constructor() {}
@@ -25,99 +23,88 @@ class DatabaseManager {
       return;
     }
 
-    // Try SRV first, fallback to direct connection
-    let uri = process.env.MONGODB_WRITE_URI || 'mongodb://localhost:27017/hrms';
+    const uri = process.env.MONGODB_WRITE_URI || 'mongodb://localhost:27017/hrms';
 
     try {
-      this.connection = mongoose.createConnection(uri, {
+      await mongoose.connect(uri, {
         maxPoolSize: 5,
         minPoolSize: 1,
-        serverSelectionTimeoutMS: 30000,
+        serverSelectionTimeoutMS: 10000,
         socketTimeoutMS: 45000,
-        connectTimeoutMS: 30000,
+        connectTimeoutMS: 10000,
         retryWrites: true,
         w: 'majority',
         family: 4,
       });
-
-      await this.connection.asPromise();
-      logger.info('MongoDB connected');
-
-      this.connection.on('error', (err) => logger.error('MongoDB Error:', err));
-      this.connection.on('disconnected', () => {
-        logger.warn('MongoDB disconnected');
-        this.connected = false;
-      });
-
+      logger.info('MongoDB connected via SRV');
       this.connected = true;
     } catch (error: any) {
-      // If SRV fails, try direct connection
-      if (error.message?.includes('ECONNREFUSED') || error.message?.includes('ENOTFOUND')) {
-        logger.warn('SRV connection failed, trying direct connection...');
-        
-        // Convert SRV to direct connection
-        // mongodb+srv://user:pass@cluster0.xtyl4et.mongodb.net/db
-        // becomes mongodb://user:pass@cluster0.xtyl4et.mongodb.net:27017/db?ssl=true
-        uri = uri
+      if (
+        error.message?.includes('ECONNREFUSED') ||
+        error.message?.includes('ENOTFOUND')
+      ) {
+        logger.warn('SRV failed, trying direct connection');
+
+        const directUri = uri
           .replace('mongodb+srv://', 'mongodb://')
-          .replace('/hrms?', ':27017/hrms?');
+          .replace(/\.mongodb\.net\//, '.mongodb.net:27017/');
 
-        if (!uri.includes('ssl=true')) {
-          uri += '&ssl=true';
-        }
+        const finalUri = directUri.includes('ssl=true')
+          ? directUri
+          : directUri + (directUri.includes('?') ? '&ssl=true' : '?ssl=true');
 
-        logger.info('Trying direct:', uri.replace(/\/\/.*@/, '//<creds>@'));
+        logger.info('Trying direct: ' + finalUri.replace(/\/\/.*@/, '//<credentials>@'));
 
-        try {
-          this.connection = mongoose.createConnection(uri, {
-            maxPoolSize: 5,
-            minPoolSize: 1,
-            serverSelectionTimeoutMS: 30000,
-            socketTimeoutMS: 45000,
-            connectTimeoutMS: 30000,
-            retryWrites: true,
-            w: 'majority',
-            family: 4,
-            ssl: true,
-          });
-
-          await this.connection.asPromise();
-          logger.info('MongoDB connected (direct)');
-
-          this.connection.on('error', (err) => logger.error('MongoDB Error:', err));
-          this.connection.on('disconnected', () => {
-            logger.warn('MongoDB disconnected');
-            this.connected = false;
-          });
-
-          this.connected = true;
-        } catch (directError) {
-          logger.error('Direct connection also failed:', directError);
-          throw directError;
-        }
+        await mongoose.connect(finalUri, {
+          maxPoolSize: 5,
+          minPoolSize: 1,
+          serverSelectionTimeoutMS: 30000,
+          socketTimeoutMS: 45000,
+          connectTimeoutMS: 30000,
+          retryWrites: true,
+          w: 'majority',
+          family: 4,
+          ssl: true,
+        });
+        logger.info('MongoDB connected via direct');
+        this.connected = true;
       } else {
         throw error;
       }
     }
+
+    mongoose.connection.on('error', (err) => {
+      logger.error('MongoDB error:', err.message);
+    });
+
+    mongoose.connection.on('disconnected', () => {
+      logger.warn('MongoDB disconnected');
+      this.connected = false;
+    });
+
+    mongoose.connection.on('reconnected', () => {
+      logger.info('MongoDB reconnected');
+      this.connected = true;
+    });
   }
 
   getWriteDB(): mongoose.Connection {
-    if (!this.connection) throw new Error('Database not connected');
-    return this.connection;
+    return mongoose.connection;
   }
 
   getReadDB(): mongoose.Connection {
-    return this.getWriteDB();
+    return mongoose.connection;
   }
 
   async disconnect(): Promise<void> {
-    if (this.connection) await this.connection.close();
+    await mongoose.disconnect();
     this.connected = false;
+    logger.info('MongoDB connection closed');
   }
 
   async healthCheck(): Promise<{ write: boolean; read: boolean }> {
     try {
-      const result = await this.connection?.db?.admin().ping();
+      const result = await mongoose.connection.db?.admin().ping();
       const ok = result?.ok === 1;
       return { write: ok, read: ok };
     } catch {

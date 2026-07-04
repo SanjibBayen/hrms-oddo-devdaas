@@ -1,10 +1,13 @@
 import { Router } from 'express';
 import { AuthController } from '../../controllers/authController';
-import { authLimiter } from '../../middleware/rateLimiter';
+import { authenticate } from '../../middleware/auth';
 
 const router = Router();
 
-router.post('/login', authLimiter, AuthController.login);
-router.post('/signup', authLimiter, AuthController.signup);
+router.post('/signup', AuthController.signup);
+router.post('/login', AuthController.login);
+router.post('/refresh', authenticate, AuthController.refresh);
+router.post('/logout', authenticate, AuthController.logout);
+router.get('/me', authenticate, AuthController.me);
 
 export default router;
