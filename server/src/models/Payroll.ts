@@ -134,7 +134,7 @@ const payrollSchema = new Schema<IPayroll>(
 // INDEXES
 // ============================================================
 
-payrollSchema.index({ userId: 1, year: -1, month: -1 });
+// payrollSchema.index({ userId: 1, year: -1, month: -1 });
 payrollSchema.index({ userId: 1, year: -1, month: -1 }, { unique: true });
 payrollSchema.index({ status: 1 });
 
