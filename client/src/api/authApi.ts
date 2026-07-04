@@ -1,19 +1,23 @@
-import axiosInstance from "./axios.ts";
-import { Employee } from "../types/index.ts";
-
-export interface LoginResponse {
-  token: string;
-  user: Employee;
-}
+import api from './axios';
 
 export const authApi = {
-  login: async (email: string, password?: string): Promise<LoginResponse> => {
-    const { data } = await axiosInstance.post<LoginResponse>("/api/auth/login", { email, password });
-    return data;
-  },
-  
-  getMe: async (): Promise<Employee> => {
-    const { data } = await axiosInstance.get<Employee>("/api/auth/me");
-    return data;
-  }
+  login: (email: string, password: string) =>
+    api.post('/auth/login', { email, password }),
+
+  signup: (data: {
+    employeeId: string;
+    email: string;
+    password: string;
+    fullName: string;
+    position: string;
+    department: string;
+    role?: string;
+  }) => api.post('/auth/signup', data),
+
+  getMe: () => api.get('/auth/me'),
+
+  refreshToken: (refreshToken: string) =>
+    api.post('/auth/refresh', { refreshToken }),
+
+  logout: () => api.post('/auth/logout'),
 };

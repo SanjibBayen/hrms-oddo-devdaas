@@ -1,19 +1,18 @@
-import axiosInstance from "./axios.ts";
-import { LeaveRequest, LeaveStatus } from "../types/index.ts";
+import api from './axios';
+import { LeaveRequest } from '../types/index.ts';
 
 export const leaveApi = {
-  getAll: async (userId?: string): Promise<LeaveRequest[]> => {
-    const { data } = await axiosInstance.get<LeaveRequest[]>("/api/leaves", { params: { userId } });
-    return data;
-  },
+  getAll: (userId?: string) =>
+    api.get<LeaveRequest[]>('/leaves', { params: { userId } }).then(res => res.data),
 
-  apply: async (request: { userId: string; leaveType: string; startDate: string; endDate: string; reason: string }): Promise<LeaveRequest> => {
-    const { data } = await axiosInstance.post<LeaveRequest>("/api/leaves", request);
-    return data;
-  },
+  apply: (data: {
+    userId: string;
+    leaveType: string;
+    startDate: string;
+    endDate: string;
+    reason: string;
+  }) => api.post<LeaveRequest>('/leaves', data).then(res => res.data),
 
-  updateStatus: async (id: string, status: LeaveStatus, approvedBy: string): Promise<LeaveRequest> => {
-    const { data } = await axiosInstance.put<LeaveRequest>(`/api/leaves/${id}/status`, { status, approvedBy });
-    return data;
-  }
+  updateStatus: (id: string, status: string, approvedBy: string) =>
+    api.put<LeaveRequest>(`/leaves/${id}/status`, { status, approvedBy }).then(res => res.data),
 };

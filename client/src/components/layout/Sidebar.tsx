@@ -1,129 +1,108 @@
-import React, { useState } from "react";
-import { 
-  LayoutDashboard, 
-  Users, 
-  CalendarClock, 
-  FileSpreadsheet, 
-  Banknote, 
-  UserCircle, 
-  ShieldCheck, 
+import React, { useState } from 'react';
+import {
+  LayoutDashboard,
+  Users,
+  CalendarClock,
+  FileText,
+  Banknote,
+  UserCircle,
+  ShieldCheck,
   LogOut,
   Menu,
   ChevronLeft,
   ChevronRight,
-  Clock
-} from "lucide-react";
-import { useAuth } from "../../hooks/useAuth.ts";
-import Badge from "../ui/Badge.tsx";
+} from 'lucide-react';
+import { useAuthStore } from '../../stores/authStore';
 
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  userRole: string;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
-  const { user, logout } = useAuth();
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, userRole }) => {
+  const { user, logout } = useAuthStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   if (!user) return null;
 
   const allLinks = [
-    { id: "dashboard", label: "Overview", icon: LayoutDashboard, roles: ["ADMIN", "MANAGER", "EMPLOYEE"] },
-    { id: "employees", label: "Employees", icon: Users, roles: ["ADMIN", "MANAGER"] },
-    { id: "attendance", label: "Attendance", icon: CalendarClock, roles: ["ADMIN", "MANAGER", "EMPLOYEE"] },
-    { id: "leave", label: "Leave Requests", icon: FileSpreadsheet, roles: ["ADMIN", "MANAGER", "EMPLOYEE"] },
-    { id: "payroll", label: "Payroll Manager", icon: Banknote, roles: ["ADMIN", "EMPLOYEE"] },
-    { id: "profile", label: "My Profile", icon: UserCircle, roles: ["ADMIN", "MANAGER", "EMPLOYEE"] },
-    { id: "admin", label: "System Audit", icon: ShieldCheck, roles: ["ADMIN"] },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['employee', 'admin', 'super_admin'] },
+    { id: 'employees', label: 'Employees', icon: Users, roles: ['admin', 'super_admin'] },
+    { id: 'attendance', label: 'Attendance', icon: CalendarClock, roles: ['employee', 'admin', 'super_admin'] },
+    { id: 'leave', label: 'Leave', icon: FileText, roles: ['employee', 'admin', 'super_admin'] },
+    { id: 'payroll', label: 'Payroll', icon: Banknote, roles: ['employee', 'admin', 'super_admin'] },
+    { id: 'profile', label: 'Profile', icon: UserCircle, roles: ['employee', 'admin', 'super_admin'] },
+    { id: 'audit', label: 'Audit Log', icon: ShieldCheck, roles: ['admin', 'super_admin'] },
   ];
 
-  const visibleLinks = allLinks.filter(link => link.roles.includes(user.role));
+  const visibleLinks = allLinks.filter((link) => link.roles.includes(userRole));
 
-  const roleLabels = {
-    ADMIN: { label: "HR Admin", variant: "danger" as const },
-    MANAGER: { label: "Manager", variant: "warning" as const },
-    EMPLOYEE: { label: "Employee", variant: "brand" as const },
+  const roleBadge: Record<string, { label: string; color: string }> = {
+    admin: { label: 'Admin', color: 'bg-red-100 text-red-700' },
+    super_admin: { label: 'Super Admin', color: 'bg-purple-100 text-purple-700' },
+    employee: { label: 'Employee', color: 'bg-blue-100 text-blue-700' },
   };
 
-  const currentRole = roleLabels[user.role] || { label: "Employee", variant: "neutral" as const };
+  const currentRole = roleBadge[userRole] || { label: 'User', color: 'bg-gray-100 text-gray-700' };
 
   return (
     <>
-      {/* Mobile Header Bar */}
-      <div className="lg:hidden h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 fixed top-0 left-0 right-0 z-40">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-[#0F172A] flex items-center justify-center">
-            <span className="text-white font-bold text-sm">E</span>
-          </div>
-          <span className="font-display font-bold text-slate-900 text-sm tracking-tight">DEVDAAS HRMS</span>
-        </div>
-        <button 
+      {/* Mobile Header */}
+      <div className="lg:hidden h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 fixed top-0 left-0 right-0 z-40">
+        <span className="font-bold text-gray-900 text-sm">HRMS</span>
+        <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 rounded-lg text-slate-500 hover:text-slate-950 hover:bg-slate-50 transition-colors"
+          className="p-2 rounded-lg text-gray-500 hover:bg-gray-100"
         >
           <Menu className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Mobile Navigation Drawer Overlay */}
+      {/* Mobile Overlay */}
       {mobileOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-slate-950/20 z-40" 
-          onClick={() => setMobileOpen(false)}
-        />
+        <div className="lg:hidden fixed inset-0 bg-black/20 z-40" onClick={() => setMobileOpen(false)} />
       )}
 
-      {/* Sidebar Navigation */}
+      {/* Sidebar */}
       <aside
-        className={`bg-white text-slate-750 border-r border-slate-200 flex flex-col fixed top-16 lg:top-0 bottom-0 left-0 z-40 transition-all duration-300 ${
-          isCollapsed ? "w-20" : "w-68"
-        } ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+        className={`bg-white border-r border-gray-200 flex flex-col fixed top-14 lg:top-0 bottom-0 left-0 z-40 transition-all duration-300 ${
+          isCollapsed ? 'w-16' : 'w-60'
+        } ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
-        {/* Brand Banner (Desktop only) */}
-        <div className="hidden lg:flex h-20 items-center justify-between px-6 border-b border-slate-100">
-          <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-[#0F172A] flex items-center justify-center">
-              <span className="text-white font-bold text-sm">E</span>
-            </div>
-            {!isCollapsed && (
-              <span className="font-display font-bold text-[#0F172A] text-sm tracking-tight">
-                DEVDAAS HRMS
-              </span>
-            )}
-          </div>
+        {/* Logo */}
+        <div className="hidden lg:flex h-14 items-center justify-between px-4 border-b border-gray-100">
+          {!isCollapsed && <span className="font-bold text-gray-900 text-sm">HRMS Enterprise</span>}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-all duration-200"
+            className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-50"
           >
             {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
 
-        {/* Current Active User Profile Card */}
-        <div className={`p-4.5 border-b border-slate-100 ${isCollapsed ? "flex justify-center" : ""}`}>
-          <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-            <img
-              src={user.avatarUrl}
-              alt={user.name}
-              className="w-9 h-9 rounded-lg object-cover border border-slate-200 shadow-2xs"
-              referrerPolicy="no-referrer"
-            />
+        {/* User Info */}
+        <div className={`p-3 border-b border-gray-100 ${isCollapsed ? 'flex justify-center' : ''}`}>
+          <div className="flex items-center gap-2.5 bg-gray-50 p-2 rounded-lg">
+            <div className="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center text-white text-xs font-bold">
+              {user.name?.charAt(0) || 'U'}
+            </div>
             {!isCollapsed && (
               <div className="min-w-0 flex-1">
-                <h4 className="text-xs font-bold text-slate-900 font-display truncate leading-tight">{user.name}</h4>
-                <p className="text-[9px] text-slate-450 truncate mb-1">{user.email}</p>
-                <Badge variant={currentRole.variant} className="text-[8px] px-1.5 py-0">
+                <p className="text-xs font-semibold text-gray-900 truncate">{user.name}</p>
+                <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
+                <span className={`inline-block text-[9px] px-1.5 py-0 rounded-full mt-1 ${currentRole.color}`}>
                   {currentRole.label}
-                </Badge>
+                </span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="flex-1 px-3 py-4 flex flex-col gap-1 overflow-y-auto">
-          {visibleLinks.map(link => {
+        {/* Nav Links */}
+        <nav className="flex-1 px-2 py-3 flex flex-col gap-0.5 overflow-y-auto">
+          {visibleLinks.map((link) => {
             const Icon = link.icon;
             const isActive = activeTab === link.id;
             return (
@@ -133,28 +112,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
                   setActiveTab(link.id);
                   setMobileOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-semibold font-display rounded-lg transition-all duration-150 ${
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-md transition-colors ${
                   isActive
-                    ? "bg-[#F1F5F9] text-[#0F172A]"
-                    : "hover:bg-slate-50/80 hover:text-[#0F172A] text-[#64748B]"
-                } ${isCollapsed ? "justify-center" : ""}`}
+                    ? 'bg-gray-100 text-gray-900'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                } ${isCollapsed ? 'justify-center' : ''}`}
                 title={link.label}
               >
-                <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-[#0F172A]" : "text-[#64748B]"}`} />
+                <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-gray-900' : 'text-gray-400'}`} />
                 {!isCollapsed && <span>{link.label}</span>}
               </button>
             );
           })}
         </nav>
 
-        {/* Logout Control */}
-        <div className="p-4 border-t border-slate-100">
+        {/* Logout */}
+        <div className="p-3 border-t border-gray-100">
           <button
             onClick={logout}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-semibold font-display rounded-lg text-rose-600 hover:bg-rose-50/60 hover:text-rose-700 transition-all duration-150 ${
-              isCollapsed ? "justify-center" : ""
+            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-md text-red-600 hover:bg-red-50 transition-colors ${
+              isCollapsed ? 'justify-center' : ''
             }`}
-            title="Log Out"
+            title="Sign Out"
           >
             <LogOut className="w-4 h-4 flex-shrink-0" />
             {!isCollapsed && <span>Sign Out</span>}

@@ -1,149 +1,130 @@
-import React, { useState } from "react";
-import { AuthProvider } from "./context/AuthContext.tsx";
-import { useAuth } from "./hooks/useAuth.ts";
-import { HRMSProvider } from "./context/HRMSContext.tsx";
-import Sidebar from "./components/layout/Sidebar.tsx";
+import React, { useState } from 'react';
+import { useAuthStore } from './stores/authStore';
+import Sidebar from './components/layout/Sidebar';
 
-// New directory-exact pages
-import LoginPage from "./pages/auth/LoginPage.tsx";
-import SignupPage from "./pages/auth/SignupPage.tsx";
-import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage.tsx";
+import LoginPage from './pages/auth/LoginPage';
+import SignupPage from './pages/auth/SignupPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 
-import DashboardPage from "./pages/dashboard/DashboardPage.tsx";
+import DashboardPage from './pages/dashboard/DashboardPage';
 
-import EmployeeListPage from "./pages/employees/EmployeeListPage.tsx";
-import EmployeeDetailPage from "./pages/employees/EmployeeDetailPage.tsx";
+import EmployeeListPage from './pages/employees/EmployeeListPage';
+import EmployeeDetailPage from './pages/employees/EmployeeDetailPage';
 
-import AttendancePage from "./pages/attendance/AttendancePage.tsx";
+import AttendancePage from './pages/attendance/AttendancePage';
 
-import LeaveApprovalsPage from "./pages/leave/LeaveApprovalsPage.tsx";
-import MyLeavesPage from "./pages/leave/MyLeavesPage.tsx";
+import LeaveApprovalsPage from './pages/leave/LeaveApprovalsPage';
+import MyLeavesPage from './pages/leave/MyLeavesPage';
 
-import PayrollManagementPage from "./pages/payroll/PayrollManagementPage.tsx";
-import MyPayrollPage from "./pages/payroll/MyPayrollPage.tsx";
+import PayrollManagementPage from './pages/payroll/PayrollManagementPage';
+import MyPayrollPage from './pages/payroll/MyPayrollPage';
 
-import ProfilePage from "./pages/profile/ProfilePage.tsx";
+import ProfilePage from './pages/profile/ProfilePage';
 
-import AuditLogPage from "./pages/audit/AuditLogPage.tsx";
+import AuditLogPage from './pages/audit/AuditLogPage';
 
-// Error Pages
-import ForbiddenPage from "./pages/errors/ForbiddenPage.tsx";
-import NotFoundPage from "./pages/errors/NotFoundPage.tsx";
-import ServerErrorPage from "./pages/errors/ServerErrorPage.tsx";
+import ForbiddenPage from './pages/errors/ForbiddenPage';
+import NotFoundPage from './pages/errors/NotFoundPage';
+import ServerErrorPage from './pages/errors/ServerErrorPage';
 
-import { Clock } from "lucide-react";
+type AuthView = 'login' | 'signup' | 'forgot';
 
-const MainAppContent: React.FC = () => {
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<string>("dashboard");
+const App: React.FC = () => {
+  const { user, isAuthenticated } = useAuthStore();
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
-  
-  // Auth navigation state
-  const [authView, setAuthView] = useState<"login" | "signup" | "forgot">("login");
+  const [authView, setAuthView] = useState<AuthView>('login');
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 gap-3">
-        <div className="bg-slate-900 p-3 rounded-2xl text-white shadow-xl animate-pulse">
-          <Clock className="w-8 h-8 text-slate-400" />
-        </div>
-        <div className="flex items-center gap-1.5 text-xs font-bold font-display text-slate-500 uppercase tracking-widest mt-1">
-          <svg className="animate-spin h-3.5 w-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
-          Synchronizing HR Registry...
-        </div>
-      </div>
-    );
-  }
-
+  // Loading state
   if (!isAuthenticated) {
     switch (authView) {
-      case "signup":
-        return <SignupPage onNavigateToLogin={() => setAuthView("login")} />;
-      case "forgot":
-        return <ForgotPasswordPage onNavigateToLogin={() => setAuthView("login")} />;
-      case "login":
+      case 'signup':
+        return <SignupPage onNavigateToLogin={() => setAuthView('login')} />;
+      case 'forgot':
+        return <ForgotPasswordPage onNavigateToLogin={() => setAuthView('login')} />;
+      case 'login':
       default:
         return (
-          <LoginPage 
-            onNavigateToSignup={() => setAuthView("signup")} 
-            onNavigateToForgotPassword={() => setAuthView("forgot")} 
+          <LoginPage
+            onNavigateToSignup={() => setAuthView('signup')}
+            onNavigateToForgotPassword={() => setAuthView('forgot')}
           />
         );
     }
   }
 
-  const renderActiveScreen = () => {
+  // Get user role in lowercase for comparison
+  const role = user?.role?.toLowerCase();
+
+  const renderPage = () => {
     switch (activeTab) {
-      case "dashboard":
+      case 'dashboard':
         return <DashboardPage />;
-      case "employees":
-        if (user?.role !== "ADMIN" && user?.role !== "MANAGER") {
-          return <ForbiddenPage onBackToDashboard={() => setActiveTab("dashboard")} />;
+
+      case 'employees':
+        if (role !== 'admin' && role !== 'super_admin') {
+          return <ForbiddenPage onBackToDashboard={() => setActiveTab('dashboard')} />;
         }
         if (selectedEmployeeId) {
           return (
-            <EmployeeDetailPage 
-              employeeId={selectedEmployeeId} 
-              onBack={() => setSelectedEmployeeId(null)} 
+            <EmployeeDetailPage
+              employeeId={selectedEmployeeId}
+              onBack={() => setSelectedEmployeeId(null)}
             />
           );
         }
         return (
-          <EmployeeListPage 
-            onViewEmployeeDetails={(emp) => setSelectedEmployeeId(emp.id)} 
+          <EmployeeListPage
+            onViewEmployeeDetails={(emp) => setSelectedEmployeeId(emp.id)}
           />
         );
-      case "attendance":
+
+      case 'attendance':
         return <AttendancePage />;
-      case "leave":
-        return user?.role === "ADMIN" || user?.role === "MANAGER" ? (
+
+      case 'leave':
+        return role === 'admin' || role === 'super_admin' ? (
           <LeaveApprovalsPage />
         ) : (
           <MyLeavesPage />
         );
-      case "payroll":
-        return user?.role === "ADMIN" ? (
+
+      case 'payroll':
+        return role === 'admin' || role === 'super_admin' ? (
           <PayrollManagementPage />
         ) : (
           <MyPayrollPage />
         );
-      case "profile":
+
+      case 'profile':
         return <ProfilePage />;
-      case "admin":
-        if (user?.role !== "ADMIN") {
-          return <ForbiddenPage onBackToDashboard={() => setActiveTab("dashboard")} />;
+
+      case 'audit':
+        if (role !== 'admin' && role !== 'super_admin') {
+          return <ForbiddenPage onBackToDashboard={() => setActiveTab('dashboard')} />;
         }
         return <AuditLogPage />;
+
       default:
-        return <NotFoundPage onBackToDashboard={() => setActiveTab("dashboard")} />;
+        return <NotFoundPage onBackToDashboard={() => setActiveTab('dashboard')} />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FB] flex flex-col lg:flex-row">
-      {/* Sidebar Panel */}
-      <Sidebar activeTab={activeTab} setActiveTab={(tab) => {
-        setActiveTab(tab);
-        setSelectedEmployeeId(null); // Reset detail view when changing tabs
-      }} />
-
-      {/* Main Panel Content Area */}
-      <main className="flex-1 p-6 lg:p-8 pt-22 lg:pt-8 min-w-0 transition-all duration-300 ml-0 lg:ml-68">
-        {renderActiveScreen()}
+    <div className="min-h-screen bg-gray-50 flex">
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={(tab: string) => {
+          setActiveTab(tab);
+          setSelectedEmployeeId(null);
+        }}
+        userRole={role || 'employee'}
+      />
+      <main className="flex-1 p-6 ml-64 min-h-screen">
+        {renderPage()}
       </main>
     </div>
   );
 };
 
-export default function App() {
-  return (
-    <AuthProvider>
-      <HRMSProvider>
-        <MainAppContent />
-      </HRMSProvider>
-    </AuthProvider>
-  );
-}
+export default App;

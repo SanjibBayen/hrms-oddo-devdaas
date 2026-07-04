@@ -1,24 +1,16 @@
-import axiosInstance from "./axios.ts";
-import { AttendanceLog } from "../types/index.ts";
+import api from './axios';
+import { AttendanceLog } from '../types/index.ts';
 
 export const attendanceApi = {
-  getLogs: async (params?: { userId?: string; date?: string }): Promise<AttendanceLog[]> => {
-    const { data } = await axiosInstance.get<AttendanceLog[]>("/api/attendance", { params });
-    return data;
-  },
+  getLogs: (params?: { userId?: string; date?: string }) =>
+    api.get<AttendanceLog[]>('/attendance', { params }).then(res => res.data),
 
-  checkIn: async (userId: string, notes?: string): Promise<AttendanceLog> => {
-    const { data } = await axiosInstance.post<AttendanceLog>("/api/attendance/check-in", { userId, notes });
-    return data;
-  },
+  checkIn: (userId: string, notes?: string) =>
+    api.post<AttendanceLog>('/attendance/check-in', { userId, notes }).then(res => res.data),
 
-  checkOut: async (userId: string): Promise<AttendanceLog> => {
-    const { data } = await axiosInstance.post<AttendanceLog>("/api/attendance/check-out", { userId });
-    return data;
-  },
+  checkOut: (userId: string) =>
+    api.post<AttendanceLog>('/attendance/check-out', { userId }).then(res => res.data),
 
-  submitManual: async (log: Omit<AttendanceLog, "id" | "workHours">): Promise<AttendanceLog> => {
-    const { data } = await axiosInstance.post<AttendanceLog>("/api/attendance/manual", log);
-    return data;
-  }
+  submitManual: (data: Omit<AttendanceLog, 'id' | 'workHours'>) =>
+    api.post<AttendanceLog>('/attendance/manual', data).then(res => res.data),
 };

@@ -24,15 +24,15 @@ export const PayrollDetails: React.FC<PayrollDetailsProps> = ({ payroll, onClose
       <div className="text-xs space-y-2">
         <div className="flex justify-between">
           <span className="text-slate-500">Employee Name:</span>
-          <span className="font-semibold text-slate-850">{payroll.employeeName}</span>
+          <span className="font-semibold text-slate-850">{payroll.userName}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-slate-500">Base Salary:</span>
-          <span className="font-mono font-semibold text-slate-850">${payroll.baseSalary.toLocaleString()}</span>
+          <span className="font-mono font-semibold text-slate-850">${payroll.basicSalary.toLocaleString()}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-slate-500">Bonus Accrual:</span>
-          <span className="font-mono font-semibold text-emerald-600">+${payroll.bonus.toLocaleString()}</span>
+          <span className="text-slate-500">Allowances:</span>
+          <span className="font-mono font-semibold text-emerald-600">+${payroll.allowances.toLocaleString()}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-slate-500">Deductions:</span>

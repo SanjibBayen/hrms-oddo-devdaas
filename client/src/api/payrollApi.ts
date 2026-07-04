@@ -1,24 +1,16 @@
-import axiosInstance from "./axios.ts";
-import { Payroll, PayrollStatus, HRMSDashboardStats } from "../types/index.ts";
+import api from './axios';
+import { Payroll, HRMSDashboardStats } from '../types/index.ts';
 
 export const payrollApi = {
-  getAll: async (params?: { userId?: string; month?: string }): Promise<Payroll[]> => {
-    const { data } = await axiosInstance.get<Payroll[]>("/api/payrolls", { params });
-    return data;
-  },
+  getAll: (params?: { userId?: string; month?: string }) =>
+    api.get<Payroll[]>('/payrolls', { params }).then(res => res.data),
 
-  calculate: async (month: string): Promise<{ message: string; payrolls: Payroll[] }> => {
-    const { data } = await axiosInstance.post<{ message: string; payrolls: Payroll[] }>("/api/payrolls/calculate", { month });
-    return data;
-  },
+  getStats: () =>
+    api.get<HRMSDashboardStats>('/stats').then(res => res.data),
 
-  updateStatus: async (id: string, status: PayrollStatus): Promise<Payroll> => {
-    const { data } = await axiosInstance.put<Payroll>(`/api/payrolls/${id}/status`, { status });
-    return data;
-  },
+  calculate: (month: string) =>
+    api.post<{ message: string; payrolls: Payroll[] }>('/payrolls/calculate', { month }).then(res => res.data),
 
-  getStats: async (): Promise<HRMSDashboardStats> => {
-    const { data } = await axiosInstance.get<HRMSDashboardStats>("/api/stats");
-    return data;
-  }
+  updateStatus: (id: string, status: string) =>
+    api.put<Payroll>(`/payrolls/${id}/status`, { status }).then(res => res.data),
 };

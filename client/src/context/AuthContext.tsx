@@ -25,8 +25,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return;
     }
     try {
-      const currentUser = await authApi.getMe();
-      setUser(currentUser);
+      const res = await authApi.getMe();
+      setUser(res.data);
     } catch (error) {
       console.error("Failed to authenticate with stored token", error);
       localStorage.removeItem("hrms_token");
@@ -43,10 +43,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (email: string, password?: string): Promise<Employee> => {
     setIsLoading(true);
     try {
-      const res = await authApi.login(email, password);
-      localStorage.setItem("hrms_token", res.token);
-      setUser(res.user);
-      return res.user;
+      const res = await authApi.login(email, password || "");
+      const { token, user } = res.data;
+      localStorage.setItem("hrms_token", token);
+      setUser(user);
+      return user;
     } catch (error) {
       setIsLoading(false);
       throw error;
