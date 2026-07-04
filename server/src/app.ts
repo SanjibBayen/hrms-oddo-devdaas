@@ -9,6 +9,7 @@ import { redisManager } from './config/redis';
 import { logger, morganStream } from './config/logger';
 import routes from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { v2 as cloudinary } from 'cloudinary';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -64,6 +65,12 @@ process.on('SIGINT', async () => {
   await databaseManager.disconnect();
   await redisManager.disconnect();
   process.exit(0);
+});
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
 });
 
 start();
