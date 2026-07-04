@@ -17,20 +17,30 @@ class RedisManager {
   connect(): Redis {
     if (this.client) return this.client;
 
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+    const redisUrl = process.env.REDIS_URL;
 
-    this.client = new Redis(redisUrl, {
-      maxRetriesPerRequest: 3,
-      retryStrategy(times) {
-        if (times > 5) return null;
-        return Math.min(times * 200, 2000);
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
+    if (redisUrl) {
+      // Full URL provided
+      this.client = new Redis(redisUrl, {
+        maxRetriesPerRequest: 3,
+        retryStrategy(times) {
+          if (times > 5) return null;
+          return Math.min(times * 200, 2000);
+        },
+        // Only use TLS if port is 6380 or URL has rediss://
+        tls: redisUrl.includes('rediss://') ? { rejectUnauthorized: false } : undefined,
+      });
+    } else {
+      // Manual config
+      this.client = new Redis({
+        host: process.env.REDIS_HOST || 'localhost',
+        port: Number(process.env.REDIS_PORT) || 6379,
+        password: process.env.REDIS_PASSWORD || undefined,
+        maxRetriesPerRequest: 3,
+      });
+    }
 
-    this.client.on('connect', () => logger.info('Redis connected'));
+    this.client.on('connect', () => logger.info('✅ Redis connected'));
     this.client.on('error', (err) => logger.error('Redis Error:', err.message));
 
     return this.client;
