@@ -1,6 +1,5 @@
 import { User } from '../models/User';
 import { jwtService } from '../utils/jwt';
-import { redisManager } from '../config/redis';
 
 type AuthResponse = {
   user: {
@@ -22,17 +21,28 @@ export class AuthService {
     fullName: string;
     position: string;
     department: string;
+    role?: string;
   }): Promise<AuthResponse> {
-    const existingUser = await User.findOne({ email: data.email.toLowerCase() });
+    const existingUser = await User.findOne({
+      $or: [
+        { email: data.email.toLowerCase() },
+        { employeeId: data.employeeId.toUpperCase() },
+      ],
+    });
+
     if (existingUser) {
-      throw new Error('Email already registered');
+      throw new Error('Email or Employee ID already registered');
     }
+
+    // Only allow admin/super_admin role if specified, default to employee
+    const allowedRoles = ['employee', 'admin', 'super_admin'];
+    const role = data.role && allowedRoles.includes(data.role) ? data.role : 'employee';
 
     const user = await User.create({
       employeeId: data.employeeId.toUpperCase(),
       email: data.email.toLowerCase(),
       password: data.password,
-      role: 'employee',
+      role: role,
       personalDetails: { fullName: data.fullName },
       jobDetails: { position: data.position, department: data.department },
     });
@@ -114,13 +124,11 @@ export class AuthService {
 
     await jwtService.revokeRefreshToken(userId);
 
-    const tokens = jwtService.generateTokenPair({
+    return jwtService.generateTokenPair({
       _id: user._id.toString(),
       employeeId: user.employeeId,
       role: user.role,
     });
-
-    return tokens;
   }
 
   static async logout(userId: string): Promise<{ message: string }> {
