@@ -10,17 +10,17 @@ async function test() {
   // ============================================================
   // TEST MONGODB
   // ============================================================
-  console.log('📦 Testing MongoDB Atlas...');
+  console.log('Testing MongoDB Atlas...');
   try {
     const conn = await mongoose.connect(process.env.MONGODB_WRITE_URI, {
       serverSelectionTimeoutMS: 15000,
     });
     const ping = await conn.connection.db.admin().ping();
-    console.log('✅ MongoDB:', JSON.stringify(ping));
+    console.log('MongoDB:', JSON.stringify(ping));
     await mongoose.disconnect();
   } catch (e) {
-    console.log('❌ MongoDB FAILED:', e.message);
-    console.log('   👉 Go to MongoDB Atlas → Network Access → Add your IP');
+    console.log('MongoDB FAILED:', e.message);
+    console.log(' Go to MongoDB Atlas → Network Access → Add your IP');
   }
 
   console.log('');
@@ -28,7 +28,7 @@ async function test() {
   // ============================================================
   // TEST REDIS (without TLS)
   // ============================================================
-  console.log('📦 Testing Redis Cloud...');
+  console.log('Testing Redis Cloud...');
   try {
     const redis = new Redis({
       host: 'kettle-pipe-mitten-98763.db.redis.io',
@@ -41,10 +41,10 @@ async function test() {
       },
     });
 
-    redis.on('error', () => {}); // Suppress errors during test
+    redis.on('error', () => { }); // Suppress errors during test
 
     const ping = await redis.ping();
-    console.log('✅ Redis:', ping);
+    console.log('Redis:', ping);
 
     await redis.set('test', 'ok', 'EX', 60);
     const val = await redis.get('test');
@@ -52,8 +52,8 @@ async function test() {
 
     await redis.quit();
   } catch (e) {
-    console.log('❌ Redis FAILED:', e.message);
-    console.log('   👉 Check if Redis Cloud allows your IP');
+    console.log('Redis FAILED:', e.message);
+    console.log('Check if Redis Cloud allows your IP');
   }
 
   console.log('\n========================================');

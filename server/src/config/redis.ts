@@ -5,7 +5,7 @@ class RedisManager {
   private static instance: RedisManager;
   private client: Redis | null = null;
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): RedisManager {
     if (!RedisManager.instance) {
@@ -40,7 +40,7 @@ class RedisManager {
       });
     }
 
-    this.client.on('connect', () => logger.info('✅ Redis connected'));
+    this.client.on('connect', () => logger.info('Redis connected'));
     this.client.on('error', (err) => logger.error('Redis Error:', err.message));
 
     return this.client;

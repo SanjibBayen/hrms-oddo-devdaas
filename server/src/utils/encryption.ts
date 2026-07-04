@@ -1,20 +1,28 @@
 import crypto from 'crypto';
 
+const ALGORITHM = 'aes-256-gcm';
+const IV_LENGTH = 16;
+const AUTH_TAG_LENGTH = 16;
+const SALT_LENGTH = 64;
+
 class EncryptionService {
   private static instance: EncryptionService;
-  private key: Buffer;
+  private masterKey: Buffer;
 
   private constructor() {
-    let keyHex = process.env.ENCRYPTION_KEY;
+    const keyHex = process.env.ENCRYPTION_KEY;
 
-    // Auto-generate if not provided or invalid
-    if (!keyHex || keyHex.length !== 64) {
-      keyHex = crypto.randomBytes(32).toString('hex');
-      console.warn('ENCRYPTION_KEY not set or invalid. Generated temporary key.');
-      console.warn('Add this to your .env: ENCRYPTION_KEY=' + keyHex);
+    if (!keyHex || keyHex.length < 64) {
+      const generatedKey = crypto.randomBytes(32).toString('hex');
+      console.warn(
+        'WARNING: ENCRYPTION_KEY is missing or invalid. Generated temporary key: ' +
+        generatedKey
+      );
+      console.warn('Add this to your .env file: ENCRYPTION_KEY=' + generatedKey);
+      this.masterKey = Buffer.from(generatedKey, 'hex');
+    } else {
+      this.masterKey = Buffer.from(keyHex, 'hex');
     }
-
-    this.key = Buffer.from(keyHex, 'hex');
   }
 
   static getInstance(): EncryptionService {
@@ -25,11 +33,17 @@ class EncryptionService {
   }
 
   encrypt(text: string | number | null | undefined): string | null {
-    if (text === null || text === undefined || text === '') return null;
+    if (text === null || text === undefined || text === '') {
+      return null;
+    }
 
     try {
-      const iv = crypto.randomBytes(16);
-      const cipher = crypto.createCipheriv('aes-256-gcm', this.key, iv);
+      const iv = crypto.randomBytes(IV_LENGTH);
+      const salt = crypto.randomBytes(SALT_LENGTH);
+
+      const key = crypto.pbkdf2Sync(this.masterKey, salt, 100000, 32, 'sha512');
+
+      const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
 
       const plaintext = String(text);
       let encrypted = cipher.update(plaintext, 'utf8', 'hex');
@@ -37,7 +51,12 @@ class EncryptionService {
 
       const authTag = cipher.getAuthTag();
 
-      return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
+      return [
+        salt.toString('hex'),
+        iv.toString('hex'),
+        authTag.toString('hex'),
+        encrypted,
+      ].join(':');
     } catch (error) {
       console.error('Encryption failed:', error);
       return null;
@@ -45,20 +64,26 @@ class EncryptionService {
   }
 
   decrypt(encryptedText: string | null | undefined): string | null {
-    if (!encryptedText) return null;
+    if (!encryptedText) {
+      return null;
+    }
 
     try {
       const parts = encryptedText.split(':');
-      if (parts.length !== 3) return encryptedText;
+      if (parts.length !== 4) {
+        return encryptedText;
+      }
 
-      const [ivHex, authTagHex, encrypted] = parts;
+      const [saltHex, ivHex, authTagHex, encrypted] = parts;
 
-      const decipher = crypto.createDecipheriv(
-        'aes-256-gcm',
-        this.key,
-        Buffer.from(ivHex!, 'hex')
-      );
-      decipher.setAuthTag(Buffer.from(authTagHex!, 'hex'));
+      const salt = Buffer.from(saltHex!, 'hex');
+      const iv = Buffer.from(ivHex!, 'hex');
+      const authTag = Buffer.from(authTagHex!, 'hex');
+
+      const key = crypto.pbkdf2Sync(this.masterKey, salt, 100000, 32, 'sha512');
+
+      const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+      decipher.setAuthTag(authTag);
 
       let decrypted = decipher.update(encrypted!, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
@@ -66,6 +91,22 @@ class EncryptionService {
       return decrypted;
     } catch {
       return encryptedText;
+    }
+  }
+
+  generateSecureToken(length: number = 32): string {
+    return crypto.randomBytes(length).toString('hex');
+  }
+
+  hashData(data: string): string {
+    return crypto.createHash('sha256').update(data).digest('hex');
+  }
+
+  constantTimeCompare(a: string, b: string): boolean {
+    try {
+      return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+    } catch {
+      return false;
     }
   }
 }
