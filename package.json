@@ -21,6 +21,7 @@
     "test": "cd server && npm test"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.2",
     "concurrently": "^9.0.1"
   }
 }
