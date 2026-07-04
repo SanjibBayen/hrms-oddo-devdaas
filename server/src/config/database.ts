@@ -5,10 +5,7 @@ class DatabaseManager {
   private static instance: DatabaseManager;
   private writeConnection: mongoose.Connection | null = null;
   private readConnection: mongoose.Connection | null = null;
-  private isConnected: boolean = false;
-  private connectionRetries: number = 0;
-  private readonly MAX_RETRIES = 5;
-  private readonly RETRY_DELAY_MS = 5000;
+  private connected: boolean = false;
 
   private constructor() {}
 
@@ -19,156 +16,78 @@ class DatabaseManager {
     return DatabaseManager.instance;
   }
 
-  async connect(): Promise<{
-    write: mongoose.Connection;
-    read: mongoose.Connection;
-  }> {
-    if (this.isConnected && this.writeConnection && this.readConnection) {
-      return { write: this.writeConnection, read: this.readConnection };
+  async connect(): Promise<void> {
+    if (this.connected) {
+      logger.info('Database already connected');
+      return;
     }
 
-    const writeUri =
-      process.env.MONGODB_WRITE_URI ||
-      'mongodb://admin:password@localhost:27017/hrms?authSource=admin';
+    const writeUri = process.env.MONGODB_WRITE_URI || 'mongodb://localhost:27017/hrms';
     const readUri = process.env.MONGODB_READ_URI || writeUri;
 
     try {
-      // Connect to Write Primary
-      this.writeConnection = await this.createConnection(writeUri, 'primary');
-      logger.info(' MongoDB Write Primary connected');
+      // Write connection
+      this.writeConnection = mongoose.createConnection(writeUri, {
+        maxPoolSize: 10,
+        minPoolSize: 2,
+        serverSelectionTimeoutMS: 10000,
+        socketTimeoutMS: 45000,
+        retryWrites: true,
+        w: 'majority',
+      });
 
-      // Connect to Read Replica
-      this.readConnection = await this.createConnection(readUri, 'secondaryPreferred');
-      logger.info(' MongoDB Read Replica connected');
+      await this.writeConnection.asPromise();
+      logger.info('MongoDB connected');
 
-      this.isConnected = true;
-      this.connectionRetries = 0;
-
-      // Monitor connections
-      this.monitorConnection(this.writeConnection, 'Write Primary');
-      this.monitorConnection(this.readConnection, 'Read Replica');
-
-      return { write: this.writeConnection, read: this.readConnection };
-    } catch (error) {
-      this.connectionRetries++;
-      logger.error(
-        ` MongoDB connection failed (attempt ${this.connectionRetries}/${this.MAX_RETRIES})`
-      );
-
-      if (this.connectionRetries < this.MAX_RETRIES) {
-        logger.info(`Retrying in ${this.RETRY_DELAY_MS / 1000}s...`);
-        await new Promise((resolve) => setTimeout(resolve, this.RETRY_DELAY_MS));
-        return this.connect();
+      // For Atlas free tier, use same connection for reads
+      if (readUri === writeUri) {
+        this.readConnection = this.writeConnection;
+        logger.info('ℹUsing same connection for reads (Atlas free tier)');
+      } else {
+        this.readConnection = mongoose.createConnection(readUri, {
+          maxPoolSize: 10,
+          minPoolSize: 2,
+          serverSelectionTimeoutMS: 10000,
+          socketTimeoutMS: 45000,
+        });
+        await this.readConnection.asPromise();
+        logger.info('MongoDB read replica connected');
       }
 
-      throw new Error(`Failed to connect to MongoDB after ${this.MAX_RETRIES} attempts`);
+      this.connected = true;
+    } catch (error) {
+      logger.error('MongoDB connection failed:', error);
+      throw error;
     }
-  }
-
-  private async createConnection(
-    uri: string,
-    readPreference: 'primary' | 'primaryPreferred' | 'secondary' | 'secondaryPreferred' | 'nearest'
-  ): Promise<mongoose.Connection> {
-    const connection = mongoose.createConnection(uri, {
-      maxPoolSize: readPreference === 'primary' ? 50 : 100,
-      minPoolSize: readPreference === 'primary' ? 10 : 20,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-      heartbeatFrequencyMS: 10000,
-      retryWrites: true,
-      retryReads: true,
-      w: 'majority',
-      readPreference,
-      maxIdleTimeMS: 60000,
-      connectTimeoutMS: 10000,
-    });
-
-    // Wait for connection
-    await connection.asPromise();
-    return connection;
-  }
-
-  private monitorConnection(connection: mongoose.Connection, name: string): void {
-    connection.on('connected', () => {
-      logger.info(`MongoDB ${name} connected`);
-    });
-
-    connection.on('disconnected', () => {
-      logger.warn(`MongoDB ${name} disconnected`);
-      this.isConnected = false;
-    });
-
-    connection.on('reconnected', () => {
-      logger.info(`MongoDB ${name} reconnected`);
-      this.isConnected = true;
-    });
-
-    connection.on('error', (error) => {
-      logger.error(`MongoDB ${name} error:`, error);
-    });
   }
 
   getWriteDB(): mongoose.Connection {
-    if (!this.writeConnection || !this.isConnected) {
-      throw new Error('Write database not connected. Call connect() first.');
-    }
+    if (!this.writeConnection) throw new Error('Database not connected');
     return this.writeConnection;
   }
 
   getReadDB(): mongoose.Connection {
-    if (!this.readConnection || !this.isConnected) {
-      // Fallback to write connection if read replica is unavailable
-      logger.warn('Read replica unavailable, falling back to write primary');
+    if (!this.readConnection) {
       return this.getWriteDB();
     }
     return this.readConnection;
   }
 
   async disconnect(): Promise<void> {
-    if (this.writeConnection) {
-      await this.writeConnection.close();
-    }
-    if (this.readConnection) {
-      await this.readConnection.close();
-    }
-    this.isConnected = false;
-    logger.info('MongoDB connections closed');
+    if (this.writeConnection) await this.writeConnection.close();
+    this.connected = false;
   }
 
-  async healthCheck(): Promise<{
-    write: boolean;
-    read: boolean;
-    latency: { write: number; read: number };
-  }> {
-    const result = {
-      write: false,
-      read: false,
-      latency: { write: 0, read: 0 },
-    };
-
-    if (this.writeConnection) {
-      const start = Date.now();
-      try {
-        await this.writeConnection.db?.admin().ping();
-        result.write = true;
-        result.latency.write = Date.now() - start;
-      } catch {
-        result.write = false;
-      }
+  async healthCheck(): Promise<{ write: boolean; read: boolean }> {
+    try {
+      const result = await this.writeConnection?.db?.admin().ping();
+      return {
+        write: result?.ok === 1,
+        read: result?.ok === 1,
+      };
+    } catch {
+      return { write: false, read: false };
     }
-
-    if (this.readConnection) {
-      const start = Date.now();
-      try {
-        await this.readConnection.db?.admin().ping();
-        result.read = true;
-        result.latency.read = Date.now() - start;
-      } catch {
-        result.read = false;
-      }
-    }
-
-    return result;
   }
 }
 
