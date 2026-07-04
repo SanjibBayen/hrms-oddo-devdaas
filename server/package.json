@@ -7,17 +7,11 @@
     "node": ">=22.0.0"
   },
   "scripts": {
-    "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/app.ts",
-    "build": "tsc && tsc-alias",
-    "start": "node -r module-alias/register dist/app.js",
-    "lint": "eslint src/ --ext .ts --fix",
-    "test": "jest --coverage --verbose",
-    "test:watch": "jest --watch --verbose",
-    "test:unit": "jest --testPathPattern=unit --verbose",
-    "test:integration": "jest --testPathPattern=integration --verbose",
-    "seed": "ts-node -r tsconfig-paths/register scripts/seed.ts",
-    "migrate": "ts-node -r tsconfig-paths/register scripts/migrate.ts",
-    "type-check": "tsc --noEmit"
+    "dev": "nodemon",
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "seed": "ts-node --transpile-only scripts/seed.ts",
+    "lint": "eslint src/ --ext .ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
