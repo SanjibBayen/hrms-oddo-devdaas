@@ -3,8 +3,12 @@ import type { IUser } from '../models/User';
 
 type Role = IUser['role'];
 
+interface AuthenticatedRequest extends Request {
+  userRole?: Role;
+}
+
 export const authorize = (...allowedRoles: Role[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     if (!req.userRole) {
       return res.status(401).json({
         status: 'error',
