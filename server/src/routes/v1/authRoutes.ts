@@ -1,14 +1,10 @@
 import { Router } from 'express';
+import { AuthController } from '../../controllers/authController';
+import { authLimiter } from '../../middleware/rateLimiter';
 
 const router = Router();
 
-// TODO: Add auth routes
-router.post('/login', (_req, res) => {
-  res.json({ message: 'Login - Coming soon' });
-});
-
-router.post('/signup', (_req, res) => {
-  res.json({ message: 'Signup - Coming soon' });
-});
+router.post('/login', authLimiter, AuthController.login);
+router.post('/signup', authLimiter, AuthController.signup);
 
 export default router;
