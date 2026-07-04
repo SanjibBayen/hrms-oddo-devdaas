@@ -66,6 +66,34 @@ class RedisManager {
     return this.getClient().del(key);
   }
 
+  async delPattern(pattern: string): Promise<number> {
+    const client = this.getClient();
+    const keys: string[] = [];
+
+    return new Promise((resolve, reject) => {
+      const stream = client.scanStream({ match: pattern, count: 100 });
+
+      stream.on('data', (resultKeys: string[]) => {
+        keys.push(...resultKeys);
+      });
+
+      stream.on('error', reject);
+
+      stream.on('end', async () => {
+        try {
+          if (!keys.length) {
+            resolve(0);
+            return;
+          }
+
+          resolve(await client.del(...keys));
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+  }
+
   async disconnect(): Promise<void> {
     if (this.client) await this.client.quit();
   }
