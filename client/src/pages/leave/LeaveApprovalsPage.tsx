@@ -25,7 +25,7 @@ export const LeaveApprovalsPage: React.FC = () => {
   const approvedCount = leaveRequests.filter(l => l.status === "APPROVED").length;
 
   const filteredLeaves = leaveRequests.filter((l) => {
-    const userNameStr = l.userName || l.employeeName || "";
+    const userNameStr = l.userName || "";
     const matchesSearch = userNameStr.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = status === "ALL" || l.status === status;
     const matchesType = leaveType === "ALL" || l.leaveType === leaveType;

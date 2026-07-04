@@ -34,9 +34,9 @@ export const PayrollTable: React.FC<PayrollTableProps> = ({ payrolls, isAdmin = 
         ) : (
           payrolls.map((p) => (
             <TableRow key={p.id}>
-              <TableCell className="font-semibold text-slate-900 font-sans">{p.employeeName}</TableCell>
+              <TableCell className="font-semibold text-slate-900 font-sans">{p.userName}</TableCell>
               <TableCell className="text-slate-600 text-xs">{p.month}</TableCell>
-              <TableCell className="font-mono text-slate-700">${p.baseSalary.toLocaleString()}</TableCell>
+              <TableCell className="font-mono text-slate-700">${p.basicSalary.toLocaleString()}</TableCell>
               <TableCell className="font-mono font-bold text-slate-900">${p.netSalary.toLocaleString()}</TableCell>
               <TableCell>
                 <Badge variant={p.status === "PAID" ? "success" : "warning"}>
@@ -52,7 +52,7 @@ export const PayrollTable: React.FC<PayrollTableProps> = ({ payrolls, isAdmin = 
                   >
                     <Eye className="w-3.5 h-3.5" />
                   </button>
-                  {isAdmin && p.status === "UNPAID" && (
+                  {isAdmin && p.status === "DRAFT" && (
                     <button
                       onClick={() => onPay?.(p.id)}
                       className="p-1 bg-emerald-50 border border-emerald-100 text-emerald-600 rounded hover:bg-emerald-100 transition-colors cursor-pointer"

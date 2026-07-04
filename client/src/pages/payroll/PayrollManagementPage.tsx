@@ -22,7 +22,7 @@ export const PayrollManagementPage: React.FC = () => {
   const isAdmin = user.role === "ADMIN";
 
   const filteredPayrolls = payrolls.filter((p) => {
-    const matchesSearch = (p.userName || p.employeeName || "").toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = (p.userName || "").toLowerCase().includes(search.toLowerCase());
     const matchesStatus = status === "ALL" || p.status === status;
     return matchesSearch && matchesStatus;
   });
@@ -30,10 +30,10 @@ export const PayrollManagementPage: React.FC = () => {
   const handleExportCSV = () => {
     const headers = ["Employee", "Month", "Base Salary", "Allowances", "Deductions", "Net Salary", "Status"];
     const rows = filteredPayrolls.map(p => [
-      p.userName || p.employeeName || "Unknown",
+      p.userName || "Unknown",
       p.month,
-      p.basicSalary || p.baseSalary || 0,
-      p.allowances || p.bonus || 0,
+      p.basicSalary || 0,
+      p.allowances || 0,
       p.deductions || 0,
       p.netSalary,
       p.status

@@ -7,11 +7,11 @@ interface SalaryBreakdownProps {
 }
 
 export const SalaryBreakdown: React.FC<SalaryBreakdownProps> = ({ payroll }) => {
-  const totalEarnings = (payroll.basicSalary || payroll.baseSalary || 0) + (payroll.allowances || payroll.bonus || 0);
+  const totalEarnings = (payroll.basicSalary || 0) + (payroll.allowances || 0);
   const deductionsVal = payroll.deductions || 0;
   
-  const basicPercent = totalEarnings > 0 ? (((payroll.basicSalary || payroll.baseSalary || 0) / totalEarnings) * 100) : 0;
-  const allowancePercent = totalEarnings > 0 ? (((payroll.allowances || payroll.bonus || 0) / totalEarnings) * 100) : 0;
+  const basicPercent = totalEarnings > 0 ? (((payroll.basicSalary || 0) / totalEarnings) * 100) : 0;
+  const allowancePercent = totalEarnings > 0 ? (((payroll.allowances || 0) / totalEarnings) * 100) : 0;
   const deductionPercent = totalEarnings > 0 ? ((deductionsVal / totalEarnings) * 100) : 0;
 
   return (
@@ -47,7 +47,7 @@ export const SalaryBreakdown: React.FC<SalaryBreakdownProps> = ({ payroll }) => 
               <span className="text-[10px] text-slate-450">Agreed basic hourly/monthly contract rate</span>
             </div>
           </div>
-          <span className="font-mono font-bold text-slate-900">${(payroll.basicSalary || payroll.baseSalary || 0).toLocaleString()}</span>
+          <span className="font-mono font-bold text-slate-900">${(payroll.basicSalary || 0).toLocaleString()}</span>
         </div>
 
         {/* Allowances Row */}
@@ -59,7 +59,7 @@ export const SalaryBreakdown: React.FC<SalaryBreakdownProps> = ({ payroll }) => 
               <span className="text-[10px] text-emerald-600/80">Active bonuses, shifts, travel & meal credits</span>
             </div>
           </div>
-          <span className="font-mono font-bold text-emerald-600">+${(payroll.allowances || payroll.bonus || 0).toLocaleString()}</span>
+          <span className="font-mono font-bold text-emerald-600">+${(payroll.allowances || 0).toLocaleString()}</span>
         </div>
 
         {/* Deductions Row */}

@@ -12,7 +12,7 @@ interface CheckInOutButtonProps {
 export const CheckInOutButton: React.FC<CheckInOutButtonProps> = ({ isCheckedIn, onCheckIn, onCheckOut, isLoading = false }) => {
   return (
     <Button
-      variant={isCheckedIn ? "outline" : "default"}
+      variant={isCheckedIn ? "outline" : "primary"}
       size="lg"
       className={`w-full font-display font-semibold transition-all duration-300 ${
         isCheckedIn ? "border-rose-200 text-rose-600 hover:bg-rose-50" : "bg-[#0F172A] hover:bg-slate-800 text-white shadow-md shadow-slate-900/10"

@@ -53,12 +53,12 @@ export const LeaveApprovalTable: React.FC<LeaveApprovalTableProps> = ({
                         {l.userName?.substring(0, 2).toUpperCase() || "ST"}
                       </div>
                       <div>
-                        <span className="block font-bold">{l.userName || l.employeeName}</span>
+                        <span className="block font-bold">{l.userName}</span>
                         <span className="block text-[9px] text-slate-400">{l.department || "Enterprise"}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={l.leaveType === "SICK" ? "danger" : l.leaveType === "ANNUAL" ? "success" : "default"} className="text-[10px]">
+                      <Badge variant={l.leaveType === "SICK" ? "danger" : l.leaveType === "ANNUAL" ? "success" : "neutral"} className="text-[10px]">
                         {l.leaveType}
                       </Badge>
                     </TableCell>
@@ -129,11 +129,11 @@ export const LeaveApprovalTable: React.FC<LeaveApprovalTableProps> = ({
                 processedRequests.map((l) => (
                   <TableRow key={l.id}>
                     <TableCell className="font-semibold text-slate-900 font-sans">
-                      <span className="block font-bold">{l.userName || l.employeeName}</span>
+                      <span className="block font-bold">{l.userName}</span>
                       <span className="block text-[9px] text-slate-400">{l.department || "Enterprise"}</span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={l.leaveType === "SICK" ? "danger" : l.leaveType === "ANNUAL" ? "success" : "default"} className="text-[10px]">
+                      <Badge variant={l.leaveType === "SICK" ? "danger" : l.leaveType === "ANNUAL" ? "success" : "neutral"} className="text-[10px]">
                         {l.leaveType}
                       </Badge>
                     </TableCell>

@@ -34,9 +34,9 @@ export const LeaveTable: React.FC<LeaveTableProps> = ({ leaves, isAdmin = false,
         ) : (
           leaves.map((l) => (
             <TableRow key={l.id}>
-              <TableCell className="font-semibold text-slate-900 font-sans">{l.employeeName}</TableCell>
+              <TableCell className="font-semibold text-slate-900 font-sans">{l.userName}</TableCell>
               <TableCell>
-                <Badge variant={l.leaveType === "SICK" ? "danger" : l.leaveType === "ANNUAL" ? "success" : "default"}>
+                <Badge variant={l.leaveType === "SICK" ? "danger" : l.leaveType === "ANNUAL" ? "success" : "neutral"}>
                   {l.leaveType}
                 </Badge>
               </TableCell>

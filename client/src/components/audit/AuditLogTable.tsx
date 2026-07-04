@@ -36,12 +36,12 @@ export const AuditLogTable: React.FC<AuditLogTableProps> = ({ logs }) => {
                 <Badge
                   variant={
                     log.category === "AUTH"
-                      ? "default"
+                      ? "info"
                       : log.category === "PAYROLL"
                       ? "success"
                       : log.category === "LEAVE"
                       ? "warning"
-                      : "primary"
+                      : "neutral"
                   }
                 >
                   {log.category}
