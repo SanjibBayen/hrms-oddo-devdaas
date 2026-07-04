@@ -1,0 +1,6 @@
+{
+  "name": "Enterprise HRMS",
+  "description": "Enterprise-grade Human Resource Management System featuring robust attendance, leave approval, role-based controls, profile management, and automatic salary computation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
