@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  mongodb-primary:
+    image: mongo:7
+    container_name: hrms-mongo-primary
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_primary_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    command: mongod --replSet rs0 --bind_ip_all
+    networks:
+      - hrms-network
+
+  mongodb-replica:
+    image: mongo:7
+    container_name: hrms-mongo-replica
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_replica_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    command: mongod --replSet rs0 --bind_ip_all
+    networks:
+      - hrms-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: hrms-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass redispassword --maxmemory 256mb --maxmemory-policy allkeys-lru
+    networks:
+      - hrms-network
+
+volumes:
+  mongo_primary_data:
+  mongo_replica_data:
+  redis_data:
+
+networks:
+  hrms-network:
+    driver: bridge
